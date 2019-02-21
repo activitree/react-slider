@@ -1,7 +1,7 @@
 {
   "name": "react-slider",
-  "version": "0.11.2",
-  "description": "Slider component for React",
+  "version": "0.11.3",
+  "description": "Slider component for React inspired by https://github.com/mpowaga/react-slider.git",
   "main": "react-slider.js",
   "keywords": [
     "react-component",
@@ -12,12 +12,8 @@
   "author": "Michał Powaga <michalpowaga13@gmail.com>",
   "contributors": [
     {
-      "name": "Florian Klampfer",
-      "email": "f.klampfer@gmail.com"
-    },
-    {
-      "name": "James Brauman",
-      "email": "james.22au@gmail.com"
+      "name": "Paul Ailincai",
+      "email": "paulailincai@icloud.com"
     }
   ],
   "license": "MIT",
@@ -26,13 +22,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/mpowaga/react-slider.git"
+    "url": "https://github.com/activitree/react-slider.git"
   },
   "peerDependencies": {
-    "react": "^16.2",
-    "prop-types": "^15.6",
-  },
-  "dependencies": {
-    "create-react-class": "^15.6",
+    "react": "^16.8.2",
+    "prop-types": "^15.7.2"
   }
 }
