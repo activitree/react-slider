@@ -15,9 +15,9 @@ function stopPropagation (e) {
  * Spreads `count` values equally between `min` and `max`.
  */
 function linspace (min, max, count) {
-  var range = (max - min) / (count - 1)
-  var res = []
-  for (var i = 0; i < count; i++) {
+  const range = (max - min) / (count - 1)
+  const res = []
+  for (let i = 0; i < count; i++) {
     res.push(min + range * i)
   }
   return res
@@ -31,7 +31,7 @@ function undoEnsureArray (x) {
   return x != null && x.length === 1 ? x[0] : x
 }
 
-var isArray = Array.isArray || function (x) {
+const isArray = Array.isArray || function (x) {
   return Object.prototype.toString.call(x) === '[object Array]'
 }
 
@@ -65,7 +65,7 @@ class ReactSlider extends Component {
         return defaultValue
       default:
         if (value.length !== count || defaultValue.length !== count) {
-          console.warn(this.constructor.displayName + ": Number of values does not match number of children.")
+          console.warn(this.constructor.displayName + ': Number of values does not match number of children.')
         }
         return linspace(this.props.min, this.props.max, count)
     }
@@ -73,10 +73,10 @@ class ReactSlider extends Component {
 
   constructor (props) {
     super(props)
-    let value = this._or(ensureArray(props.value), ensureArray(props.defaultValue))
+    const value = this._or(ensureArray(props.value), ensureArray(props.defaultValue))
     this.tempArray = value.slice()
     this.pendingResizeTimeouts = []
-    let zIndices = []
+    const zIndices = []
     for (let i = 0; i < value.length; i++) {
       value[i] = this._trimAlignValue(value[i], props)
       zIndices.push(i)
@@ -89,18 +89,20 @@ class ReactSlider extends Component {
       value: value,
       zIndices: zIndices
     }
+    this._resize = this._resize.bind(this)
   }
 
-  componentWillReceiveProps (newProps) {
-    const value = this._or(ensureArray(newProps.value), this.state.value)
-    this.tempArray = value.slice()
-    for (var i = 0; i < value.length; i++) {
-      this.state.value[i] = this._trimAlignValue(value[i], newProps)
-    }
-    if (this.state.value.length > value.length)
-      this.state.value.length = value.length
-    if (this.state.upperBound === 0) {
-      this._resize()
+  componentDidUpdate (prevProps, prevState, snapshot) {
+    if (prevProps.value !== this.props.value) {
+      const value = this._or(ensureArray(this.props.value), this.state.value)
+      this.tempArray = value.slice()
+      for (let i = 0; i < value.length; i++) {
+        this.state.value[i] = this._trimAlignValue(value[i], this.props)
+      }
+      if (this.state.value.length > value.length) { this.state.value.length = value.length }
+      if (this.state.upperBound === 0) {
+        this._resize()
+      }
     }
   }
 
@@ -136,39 +138,39 @@ class ReactSlider extends Component {
 
   _handleResize () {
     // setTimeout of 0 gives element enough time to have assumed its new size if it is being resized
-    var resizeTimeout = window.setTimeout(function () {
+    const resizeTimeout = window.setTimeout(function () {
       // drop this timeout from pendingResizeTimeouts to reduce memory usage
-      this.pendingResizeTimeouts.shift()
+      this.pendingResizeTimeouts && this.pendingResizeTimeouts.shift()
       this._resize()
     }.bind(this), 0)
 
-    this.pendingResizeTimeouts.push(resizeTimeout)
+    this.pendingResizeTimeouts && this.pendingResizeTimeouts.push(resizeTimeout)
   }
 
   _clearPendingResizeTimeouts () {
     do {
-      var nextTimeout = this.pendingResizeTimeouts.shift()
+      const nextTimeout = this.pendingResizeTimeouts && this.pendingResizeTimeouts.shift()
 
       clearTimeout(nextTimeout)
     } while (this.pendingResizeTimeouts.length)
   }
 
   _calcOffset (value) {
-    var range = this.props.max - this.props.min
+    const range = this.props.max - this.props.min
     if (range === 0) {
       return 0
     }
-    var ratio = (value - this.props.min) / range
+    const ratio = (value - this.props.min) / range
     return ratio * this.state.upperBound
   }
 
   _calcValue (offset) {
-    var ratio = offset / this.state.upperBound
+    const ratio = offset / this.state.upperBound
     return ratio * (this.props.max - this.props.min) + this.props.min
   }
 
   _buildHandleStyle (offset, i) {
-    var style = {
+    const style = {
       position: 'absolute',
       willChange: this.state.index >= 0 ? this._posMinKey() : '',
       zIndex: this.state.zIndices.indexOf(i) + 1
@@ -178,7 +180,7 @@ class ReactSlider extends Component {
   }
 
   _buildBarStyle (min, max) {
-    var obj = {
+    const obj = {
       position: 'absolute',
       willChange: this.state.index >= 0 ? this._posMinKey() + ',' + this._posMaxKey() : ''
     }
@@ -188,15 +190,15 @@ class ReactSlider extends Component {
   }
 
   _getClosestIndex (pixelOffset) {
-    var minDist = Number.MAX_VALUE
-    var closestIndex = -1
+    let minDist = Number.MAX_VALUE
+    let closestIndex = -1
 
-    var value = this.state.value
-    var l = value.length
+    const value = this.state.value
+    const l = value.length
 
-    for (var i = 0; i < l; i++) {
-      var offset = this._calcOffset(value[i])
-      var dist = Math.abs(pixelOffset - offset)
+    for (let i = 0; i < l; i++) {
+      const offset = this._calcOffset(value[i])
+      const dist = Math.abs(pixelOffset - offset)
       if (dist < minDist) {
         minDist = dist
         closestIndex = i
@@ -206,24 +208,26 @@ class ReactSlider extends Component {
   }
 
   _calcOffsetFromPosition (position) {
-    var pixelOffset = position - this.state.sliderStart
+    let pixelOffset = position - this.state.sliderStart
     if (this.props.invert) pixelOffset = this.state.sliderLength - pixelOffset
     pixelOffset -= (this.state.handleSize / 2)
     return pixelOffset
   }
-  _forceValueFromPosition (position, callback) {
-    var pixelOffset = this._calcOffsetFromPosition(position)
-    var closestIndex = this._getClosestIndex(pixelOffset)
-    var nextValue = this._trimAlignValue(this._calcValue(pixelOffset))
 
-    var value = this.state.value.slice()
+  _forceValueFromPosition (position, callback) {
+    const pixelOffset = this._calcOffsetFromPosition(position)
+    const closestIndex = this._getClosestIndex(pixelOffset)
+    const nextValue = this._trimAlignValue(this._calcValue(pixelOffset))
+
+    const value = this.state.value.slice()
     value[closestIndex] = nextValue
 
     for (var i = 0; i < value.length - 1; i += 1) {
       if (value[i + 1] - value[i] < this.props.minDistance) return
     }
-    this.setState({value: value}, callback.bind(this, closestIndex))
+    this.setState({ value: value }, callback.bind(this, closestIndex))
   }
+
   _getMousePosition (e) {
     return [
       e['page' + this._axisKey()],
@@ -232,7 +236,7 @@ class ReactSlider extends Component {
   }
 
   _getTouchPosition (e) {
-    var touch = e.touches[0];
+    var touch = e.touches[0]
     return [
       touch['page' + this._axisKey()],
       touch['page' + this._orthogonalAxisKey()]
@@ -241,24 +245,25 @@ class ReactSlider extends Component {
 
   _getKeyDownEventMap () {
     return {
-      'keydown': this._onKeyDown,
-      'focusout': this._onBlur
+      keydown: this._onKeyDown,
+      focusout: this._onBlur
     }
   }
 
   _getMouseEventMap () {
     return {
-      'mousemove': this._onMouseMove,
-      'mouseup': this._onMouseUp
+      mousemove: this._onMouseMove.bind(this),
+      mouseup: this._onMouseUp.bind(this)
     }
   }
 
   _getTouchEventMap () {
     return {
-      'touchmove': this._onTouchMove,
-      'touchend': this._onTouchEnd
+      touchmove: this._onTouchMove.bind(this),
+      touchend: this._onTouchEnd.bind(this)
     }
   }
+
   _createOnKeyDown (i) {
     return function (e) {
       if (this.props.disabled) return
@@ -271,7 +276,7 @@ class ReactSlider extends Component {
   _createOnMouseDown (i) {
     return function (e) {
       if (this.props.disabled) return
-      var position = this._getMousePosition(e)
+      const position = this._getMousePosition(e)
       this._start(i, position[0])
       this._addHandlers(this._getMouseEventMap())
       pauseEvent(e)
@@ -281,7 +286,7 @@ class ReactSlider extends Component {
   _createOnTouchStart (i) {
     return function (e) {
       if (this.props.disabled || e.touches.length > 1) return
-      var position = this._getTouchPosition(e)
+      const position = this._getTouchPosition(e)
       this.startPosition = position
       this.isScrolling = undefined
       this._start(i, position[0])
@@ -291,20 +296,21 @@ class ReactSlider extends Component {
   }
 
   _addHandlers (eventMap) {
-    for (var key in eventMap) {
+    for (const key in eventMap) {
       document.addEventListener(key, eventMap[key], false)
     }
   }
+
   _removeHandlers (eventMap) {
-    for (var key in eventMap) {
+    for (const key in eventMap) {
       document.removeEventListener(key, eventMap[key], false)
     }
   }
 
   _start (i, position) {
-    var activeEl = document.activeElement
-    var handleRef = this['handle' + i]
-    if (activeEl && activeEl != document.body && activeEl != handleRef) {
+    const activeEl = document.activeElement
+    const handleRef = this['handle' + i]
+    if (activeEl && activeEl !== document.body && activeEl !== handleRef) {
       activeEl.blur && activeEl.blur()
     }
 
@@ -312,7 +318,7 @@ class ReactSlider extends Component {
 
     this._fireChangeEvent('onBeforeChange')
 
-    var zIndices = this.state.zIndices
+    const zIndices = this.state.zIndices
     zIndices.splice(zIndices.indexOf(i), 1)
     zIndices.push(i)
 
@@ -340,36 +346,36 @@ class ReactSlider extends Component {
 
   _onEnd (eventMap) {
     this._removeHandlers(eventMap)
-    this.setState({index: -1}, this._fireChangeEvent.bind(this, 'onAfterChange'))
+    this.setState({ index: -1 }, this._fireChangeEvent.bind(this, 'onAfterChange'))
   }
 
   _onMouseMove (e) {
-    var position = this._getMousePosition(e)
-    var diffPosition = this._getDiffPosition(position[0])
-    var newValue = this._getValueFromPosition(diffPosition)
+    const position = this._getMousePosition(e)
+    const diffPosition = this._getDiffPosition(position[0])
+    const newValue = this._getValueFromPosition(diffPosition)
     this._move(newValue)
   }
 
   _onTouchMove (e) {
     if (e.touches.length > 1) return
 
-    var position = this._getTouchPosition(e)
+    const position = this._getTouchPosition(e)
 
     if (typeof this.isScrolling === 'undefined') {
-      var diffMainDir = position[0] - this.startPosition[0]
-      var diffScrollDir = position[1] - this.startPosition[1]
+      const diffMainDir = position[0] - this.startPosition[0]
+      const diffScrollDir = position[1] - this.startPosition[1]
       this.isScrolling = Math.abs(diffScrollDir) > Math.abs(diffMainDir)
     }
 
     if (this.isScrolling) {
-      this.setState({index: -1})
+      this.setState({ index: -1 })
       return
     }
 
     pauseEvent(e)
 
-    var diffPosition = this._getDiffPosition(position[0])
-    var newValue = this._getValueFromPosition(diffPosition)
+    const diffPosition = this._getDiffPosition(position[0])
+    const newValue = this._getValueFromPosition(diffPosition)
 
     this._move(newValue)
   }
@@ -377,68 +383,67 @@ class ReactSlider extends Component {
   _onKeyDown (e) {
     if (e.ctrlKey || e.shiftKey || e.altKey) return
     switch (e.key) {
-      case "ArrowLeft":
-      case "ArrowUp":
+      case 'ArrowLeft':
+      case 'ArrowUp':
         e.preventDefault()
         return this._moveDownOneStep()
-      case "ArrowRight":
-      case "ArrowDown":
+      case 'ArrowRight':
+      case 'ArrowDown':
         e.preventDefault()
         return this._moveUpOneStep()
-      case "Home":
+      case 'Home':
         return this._move(this.props.min)
-      case "End":
+      case 'End':
         return this._move(this.props.max)
       default:
-        return
     }
   }
 
   _moveUpOneStep () {
-    var oldValue = this.state.value[this.state.index]
-    var newValue = oldValue + this.props.step
+    const oldValue = this.state.value[this.state.index]
+    const newValue = oldValue + this.props.step
     this._move(Math.min(newValue, this.props.max))
   }
 
   _moveDownOneStep () {
-    var oldValue = this.state.value[this.state.index]
-    var newValue = oldValue - this.props.step
+    const oldValue = this.state.value[this.state.index]
+    const newValue = oldValue - this.props.step
     this._move(Math.max(newValue, this.props.min))
   }
 
   _getValueFromPosition (position) {
-    var diffValue = position / (this.state.sliderLength - this.state.handleSize) * (this.props.max - this.props.min)
+    const diffValue = position / (this.state.sliderLength - this.state.handleSize) * (this.props.max - this.props.min)
     return this._trimAlignValue(this.state.startValue + diffValue)
   }
 
   _getDiffPosition (position) {
-    var diffPosition = position - this.state.startPosition
+    let diffPosition = position - this.state.startPosition
     if (this.props.invert) diffPosition *= -1
     return diffPosition
   }
 
   _move (newValue) {
     this.hasMoved = true
-    var props = this.props
-    var state = this.state
-    var index = state.index
-    var value = state.value
-    var length = value.length
-    var oldValue = value[index]
-    var minDistance = props.minDistance
+    const props = this.props
+    const state = this.state
+    const index = state.index
+    const value = state.value
+    const length = value.length
+    const oldValue = value[index]
+    const minDistance = props.minDistance
 
     // if "pearling" (= handles pushing each other) is disabled,
     // prevent the handle from getting closer than `minDistance` to the previous or next handle.
     if (!props.pearling) {
       if (index > 0) {
-        var valueBefore = value[index - 1]
+        const valueBefore = value[index - 1]
         if (newValue < valueBefore + minDistance) {
           newValue = valueBefore + minDistance
         }
       }
 
       if (index < length - 1) {
-        var valueAfter = value[index + 1]
+        const valueAfter = value[index + 1]
         if (newValue > valueAfter - minDistance) {
           newValue = valueAfter - minDistance
         }
@@ -461,22 +466,22 @@ class ReactSlider extends Component {
     // Normally you would use `shouldComponentUpdate`, but since the slider is a low-level component,
     // the extra complexity might be worth the extra performance.
     if (newValue !== oldValue) {
-      this.setState({value: value}, this._fireChangeEvent.bind(this, 'onChange'))
+      this.setState({ value: value }, this._fireChangeEvent.bind(this, 'onChange'))
     }
   }
 
   _pushSucceeding (value, minDistance, index) {
-    var i, padding;
+    let i, padding
     for (i = index, padding = value[i] + minDistance;
-         value[i + 1] != null && padding > value[i + 1];
-         i++, padding = value[i] + minDistance) {
+      value[i + 1] != null && padding > value[i + 1];
+      i++, padding = value[i] + minDistance) {
       value[i + 1] = this._alignValue(padding)
     }
   }
 
   _trimSucceeding (length, nextValue, minDistance, max) {
-    for (var i = 0; i < length; i++) {
-      var padding = max - i * minDistance
+    for (let i = 0; i < length; i++) {
+      const padding = max - i * minDistance
       if (nextValue[length - 1 - i] > padding) {
         nextValue[length - 1 - i] = padding
       }
@@ -484,17 +489,17 @@ class ReactSlider extends Component {
   }
 
   _pushPreceding (value, minDistance, index) {
-    var i, padding;
+    let i, padding
     for (i = index, padding = value[i] - minDistance;
-         value[i - 1] != null && padding < value[i - 1];
-         i--, padding = value[i] - minDistance) {
+      value[i - 1] != null && padding < value[i - 1];
+      i--, padding = value[i] - minDistance) {
       value[i - 1] = this._alignValue(padding)
     }
   }
 
   _trimPreceding (length, nextValue, minDistance, min) {
-    for (var i = 0; i < length; i++) {
-      var padding = min + i * minDistance
+    for (let i = 0; i < length; i++) {
+      const padding = min + i * minDistance
       if (nextValue[i] < padding) {
         nextValue[i] = padding
       }
@@ -502,31 +507,31 @@ class ReactSlider extends Component {
   }
 
   _axisKey () {
-    var orientation = this.props.orientation
+    const orientation = this.props.orientation
     if (orientation === 'horizontal') return 'X'
     if (orientation === 'vertical') return 'Y'
   }
 
   _orthogonalAxisKey () {
-    var orientation = this.props.orientation
+    const orientation = this.props.orientation
     if (orientation === 'horizontal') return 'Y'
     if (orientation === 'vertical') return 'X'
   }
 
   _posMinKey () {
-    var orientation = this.props.orientation;
+    const orientation = this.props.orientation
     if (orientation === 'horizontal') return this.props.invert ? 'right' : 'left'
     if (orientation === 'vertical') return this.props.invert ? 'bottom' : 'top'
   }
 
   _posMaxKey () {
-    var orientation = this.props.orientation
+    const orientation = this.props.orientation
     if (orientation === 'horizontal') return this.props.invert ? 'left' : 'right'
     if (orientation === 'vertical') return this.props.invert ? 'top' : 'bottom'
   }
 
   _sizeKey () {
-    var orientation = this.props.orientation
+    const orientation = this.props.orientation
     if (orientation === 'horizontal') return 'clientWidth'
     if (orientation === 'vertical') return 'clientHeight'
   }
@@ -545,8 +550,8 @@ class ReactSlider extends Component {
   _alignValue (val, props) {
     props = props || this.props
 
-    var valModStep = (val - props.min) % props.step
-    var alignValue = val - valModStep
+    const valModStep = (val - props.min) % props.step
+    let alignValue = val - valModStep
 
     if (Math.abs(valModStep) * 2 >= props.step) {
       alignValue += (valModStep > 0) ? props.step : (-props.step)
@@ -556,51 +561,51 @@ class ReactSlider extends Component {
   }
 
   _renderHandle (style, child, i) {
-    var self = this
-    var className = this.props.handleClassName + ' ' +
+    const self = this
+    const className = this.props.handleClassName + ' ' +
       (this.props.handleClassName + '-' + i) + ' ' +
       (this.state.index === i ? this.props.handleActiveClassName : '')
 
     return (
       React.createElement('div', {
-          ref: r => {
-            self['handle' + i] = r
-          },
-          key: 'handle' + i,
-          className: className,
-          style: style,
-          onMouseDown: this._createOnMouseDown(i),
-          onTouchStart: this._createOnTouchStart(i),
-          onFocus: this._createOnKeyDown(i),
-          tabIndex: 0,
-          role: "slider",
-          "aria-valuenow": this.state.value[i],
-          "aria-valuemin": this.props.min,
-          "aria-valuemax": this.props.max,
-          "aria-label": isArray(this.props.ariaLabel) ? this.props.ariaLabel[i] : this.props.ariaLabel,
-          "aria-valuetext": this.props.ariaValuetext,
+        ref: r => {
+          self['handle' + i] = r
         },
-        child
+        key: 'handle' + i,
+        className: className,
+        style: style,
+        onMouseDown: this._createOnMouseDown(i),
+        onTouchStart: this._createOnTouchStart(i),
+        onFocus: this._createOnKeyDown(i),
+        tabIndex: 0,
+        role: 'slider',
+        'aria-valuenow': this.state.value[i],
+        'aria-valuemin': this.props.min,
+        'aria-valuemax': this.props.max,
+        'aria-label': isArray(this.props.ariaLabel) ? this.props.ariaLabel[i] : this.props.ariaLabel,
+        'aria-valuetext': this.props.ariaValuetext
+      },
+      child
       )
     )
   }
 
   _renderHandles (offset) {
-    var length = offset.length
+    const length = offset.length
 
-    var styles = this.tempArray
-    for (var i = 0; i < length; i++) {
+    const styles = this.tempArray
+    for (let i = 0; i < length; i++) {
       styles[i] = this._buildHandleStyle(offset[i], i)
     }
 
-    var res = []
-    var renderHandle = this._renderHandle
+    const res = []
+    const renderHandle = this._renderHandle.bind(this)
     if (React.Children.count(this.props.children) > 0) {
       React.Children.forEach(this.props.children, function (child, i) {
         res[i] = renderHandle(styles[i], child, i)
       })
     } else {
-      for (i = 0; i < length; i++) {
+      for (let i = 0; i < length; i++) {
         res[i] = renderHandle(styles[i], null, i)
       }
     }
@@ -608,12 +613,12 @@ class ReactSlider extends Component {
   }
 
   _renderBar (i, offsetFrom, offsetTo) {
-    var self = this
+    const self = this
     return (
       React.createElement('div', {
         key: 'bar' + i,
         ref: function (r) {
-          self['bar' + i] = r;
+          self['bar' + i] = r
         },
         className: this.props.barClassName + ' ' + this.props.barClassName + '-' + i,
         style: this._buildBarStyle(offsetFrom, this.state.upperBound - offsetTo)
@@ -622,12 +627,12 @@ class ReactSlider extends Component {
   }
 
   _renderBars (offset) {
-    var bars = []
-    var lastIndex = offset.length - 1
+    const bars = []
+    const lastIndex = offset.length - 1
 
     bars.push(this._renderBar(0, 0, offset[0]))
 
-    for (var i = 0; i < lastIndex; i++) {
+    for (let i = 0; i < lastIndex; i++) {
       bars.push(this._renderBar(i + 1, offset[i], offset[i + 1]))
     }
 
@@ -640,7 +645,7 @@ class ReactSlider extends Component {
     if (this.props.disabled) return
     this.hasMoved = false
     if (!this.props.snapDragDisabled) {
-      var position = this._getMousePosition(e)
+      const position = this._getMousePosition(e)
       this._forceValueFromPosition(position[0], function (i) {
         this._start(i, position[0])
         this._fireChangeEvent('onChange')
@@ -655,8 +660,8 @@ class ReactSlider extends Component {
     if (this.props.disabled) return
 
     if (this.props.onSliderClick && !this.hasMoved) {
-      var position = this._getMousePosition(e)
-      var valueAtPos = this._trimAlignValue(this._calcValue(this._calcOffsetFromPosition(position[0])))
+      const position = this._getMousePosition(e)
+      const valueAtPos = this._trimAlignValue(this._calcValue(this._calcOffsetFromPosition(position[0])))
       this.props.onSliderClick(valueAtPos)
     }
   }
@@ -668,32 +673,30 @@ class ReactSlider extends Component {
   }
 
   render () {
-    var self = this
-    var state = this.state
-    var props = this.props
+    const self = this
+    const state = this.state
+    const props = this.props
 
-    var offset = this.tempArray
-    var value = state.value
-    var l = value.length
-    for (var i = 0; i < l; i++) {
+    const offset = this.tempArray
+    const value = state.value
+    const l = value.length
+    for (let i = 0; i < l; i++) {
       offset[i] = this._calcOffset(value[i], i)
     }
 
-    var bars = props.withBars ? this._renderBars(offset) : null
-    var handles = this._renderHandles(offset)
+    const bars = props.withBars ? this._renderBars(offset) : null
+    const handles = this._renderHandles(offset)
 
     return (
       React.createElement('div', {
-          ref: r => {
-            self.slider = r
-          },
-          style: { position: 'relative' },
-          className: props.className + (props.disabled ? ' disabled' : ''),
-          onMouseDown: this._onSliderMouseDown,
-          onClick: this._onSliderClick
-        },
-        bars,
-        handles
+        ref: r => { self.slider = r },
+        style: { position: 'relative' },
+        className: props.className + (props.disabled ? ' disabled' : ''),
+        onMouseDown: this._onSliderMouseDown.bind(this),
+        onClick: this._onSliderClick.bind(this)
+      },
+      bars,
+      handles
       )
     )
   }
